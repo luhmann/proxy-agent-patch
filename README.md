@@ -1,4 +1,4 @@
-# Proxy Agent Patch
+# Proxy Agent Patch [![Build Status](https://travis-ci.org/luhmann/proxy-agent-patch.svg?branch=master)](https://travis-ci.org/luhmann/proxy-agent-patch)
 
 [Monkey patches](https://en.wikipedia.org/wiki/Monkey_patch) the `http` and `https` global-agents to use a configured proxy.
 
