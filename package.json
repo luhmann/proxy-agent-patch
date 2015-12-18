@@ -1,0 +1,22 @@
+{
+  "name": "proxy-agent-patch",
+  "description": "Monkey patch agent of http and https methods to use an http-proxy",
+  "homepage": "https://github.com/luhmann/proxy-agent-patch",
+  "version": "0.0.1",
+  "main": "index.js",
+  "scripts": {
+    "test": "tape tests/*.js | tap-spec"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:luhmann/proxy-agent-patch.git"
+  },
+  "devDependencies": {
+    "tap-spec": "^2.1.2",
+    "tape": "^3.0.3"
+  },
+  "dependencies": {
+    "http-proxy-agent": "^1.0.0",
+    "https-proxy-agent": "^1.0.0"
+  }
+}
