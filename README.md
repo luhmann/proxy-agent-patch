@@ -13,18 +13,21 @@ Include this before your code or any packages would use nodes `http` or `https`
 require('proxy-agent-patch')();
 ```
 
-If no options are passed proxy-agent-patch will try to infer the proxy settings for `http` and `https` from
-`process.env.http_proxy`, `process.env.https_proxy` or `process.env.HTTP_PROXY`, `process.env.HTTPS_PROXY`
+If no options are passed proxy-agent-patch will try to infer the proxy settings for `http`, `https` and `noProxy` from `process.env.http_proxy`, `process.env.https_proxy` and `process.env.no_proxy` or `process.env.HTTP_PROXY`, `process.env.HTTPS_PROXY` and `process.env.NO_PROXY`.
 
 You can also pass the proxy explicitly:
 
 ```js
 require('proxy-agent-patch')({
   httpProxy: 'http://proxy.com:8080',
-  httpsProxy: 'https://proxy.com:8080'
+  httpsProxy: 'https://proxy.com:8080',
+  noProxy: ['localhost', '127.0.0.0/8']
 });
 ```
+
 You can also specify an http-proxy for https-connections.
 
 ### Release History
 * 0.0.x Development Version. Do not use
+* 0.0.1 Initial release version
+* 0.0.2 Refacting of patching
