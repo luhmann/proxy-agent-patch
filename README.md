@@ -21,7 +21,7 @@ You can also pass the proxy explicitly:
 require('proxy-agent-patch')({
   httpProxy: 'http://proxy.com:8080',
   httpsProxy: 'https://proxy.com:8080',
-  noProxy: ['localhost', '127.0.0.0/8']
+  noProxy: 'localhost, 127.0.0.0/8'
 });
 ```
 
@@ -30,4 +30,4 @@ You can also specify an http-proxy for https-connections.
 ### Release History
 * 0.0.x Development Version. Do not use
 * 0.0.1 Initial release version
-* 0.0.2 Refacting of patching
+* 0.0.2 Refactoring of patching
