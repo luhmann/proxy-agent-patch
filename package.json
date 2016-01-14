@@ -17,6 +17,8 @@
   },
   "dependencies": {
     "http-proxy-agent": "^1.0.0",
-    "https-proxy-agent": "^1.0.0"
-  }
+    "https-proxy-agent": "^1.0.0",
+    "minimatch": "^3.0.0"
+  },
+  "engine": "node >= 0.12.0"
 }
