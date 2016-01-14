@@ -1,22 +1,46 @@
 module.exports = function(options) {
   'use strict';
 
-  var url = require('url');
-  var https = require('https');
-  var http = require('http');
-  var util = require('util');
-  var HttpsProxyAgent = require('https-proxy-agent');
-  var HttpProxyAgent = require('http-proxy-agent');
+  var
+    url = require('url'),
+    https = require('https'),
+    http = require('http'),
+    util = require('util'),
+    minimatch = require('minimatch'),
+    HttpsProxyAgent = require('https-proxy-agent'),
+    HttpProxyAgent = require('http-proxy-agent'),
+    httpProxy,
+    httpsProxy,
+    noProxy;
 
-  var httpProxy = (options && options.httpProxy) || process.env.http_proxy || process.env.HTTP_PROXY;
-  var httpsProxy = (options && options.httpsProxy) || process.env.https_proxy || process.env.HTTPS_PROXY;
+  httpProxy = (options && options.httpProxy) || process.env.http_proxy || process.env.HTTP_PROXY;
+  httpsProxy = (options && options.httpsProxy) || process.env.https_proxy || process.env.HTTPS_PROXY;
+  noProxy = (
+    (options && options.noProxy) || (
+      process.env.https_proxy || 
+      process.env.HTTPS_PROXY
+    ) || ''
+  ).split(',');
 
-  var patch = function(proxy, HttpAgent, library) {
-    var httpAgent = new HttpAgent(proxy);
+  var matchesNoProxy = function(host, noProxy) {
+    for (var i = 0; i < noProxy.length; i++) {
+      if (minimatch(host, noProxy[i])) { return true; }
+    }
 
-    if(httpAgent) {
+    return false;
+  };
+
+  var patch = function(proxy, HttpAgent, library, noProxy) {
+    var
+      httpAgent = new HttpAgent(proxy),
+      _ordinaryGlobalAgent = library.globalAgent,
+      _httpRequest;
+
+    if (httpAgent) {
+      // ...replace global agent on spec
       library.globalAgent = library.Agent.globalAgent = httpAgent;
-      var _httpRequest = library.request;
+      _httpRequest = library.request;
+
       library.request = function(options, cb) {
         if (typeof options === 'string') {
           options = url.parse(options);
@@ -24,13 +48,19 @@ module.exports = function(options) {
           options = util._extend({}, options);
         }
 
-        options.agent = options.agent || httpAgent;
+        // ...omitting patches of agent if host matches noProxy
+        if (!matchesNoProxy(library.host, noProxy)) {
+          library.globalAgent = library.Agent.globalAgent = httpAgent;
+          options.agent = options.agent || httpAgent;
+        } else {
+          library.globalAgent = library.Agent.globalAgent = _ordinaryGlobalAgent;
+        }
 
         return _httpRequest.call(http, options, cb);
       };
     }
   };
 
-  if (httpProxy) { patch(httpProxy, HttpProxyAgent, http); }
-  if (httpsProxy) { patch(httpsProxy, HttpsProxyAgent, https); }
+  if (httpProxy) { patch(httpProxy, HttpProxyAgent, http, noProxy); }
+  if (httpsProxy) { patch(httpsProxy, HttpsProxyAgent, https, noProxy); }
 };
