@@ -7,7 +7,6 @@ module.exports = function(options) {
   var util = require('util');
   var HttpsProxyAgent = require('https-proxy-agent');
   var HttpProxyAgent = require('http-proxy-agent');
-  var _ = require('lodash');
 
   var httpProxy = (options && options.httpProxy) || process.env.http_proxy || process.env.HTTP_PROXY || null;
   var httpsProxy = (options && options.httpsProxy) || process.env.https_proxy || process.env.HTTPS_PROXY || null;
