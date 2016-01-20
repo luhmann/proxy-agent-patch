@@ -8,15 +8,38 @@ module.exports = function(options) {
   var HttpsProxyAgent = require('https-proxy-agent');
   var HttpProxyAgent = require('http-proxy-agent');
 
-  var httpProxy = (options && options.httpProxy) || process.env.http_proxy || process.env.HTTP_PROXY;
-  var httpsProxy = (options && options.httpsProxy) || process.env.https_proxy || process.env.HTTPS_PROXY;
+  var httpProxy = (options && options.httpProxy) || process.env.http_proxy || process.env.HTTP_PROXY || null;
+  var httpsProxy = (options && options.httpsProxy) || process.env.https_proxy || process.env.HTTPS_PROXY || null;
+  var noProxy = (options && options.noProxy) || process.env.no_proxy || process.env.NO_PROXY || null;
+
+  var ignoreHost = function(noProxy, hostname) {
+    if (noProxy) {
+      if (noProxy === '*') {
+        return true;
+      }
+
+      var ignoredHosts = noProxy.split(',');
+      for(var i = 0, l = ignoredHosts.length; i < l; i++) {
+        var noProxyItem = ignoredHosts[i].trim();
+
+        if (hostname.indexOf(noProxyItem) === hostname.length - noProxyItem.length) {
+          return true;
+          break;
+        }
+      }
+    }
+
+    return false;
+  }
+
 
   var patch = function(proxy, HttpAgent, library) {
     var httpAgent = new HttpAgent(proxy);
 
-    if(httpAgent) {
+    if (httpAgent) {
+      var originalAgent = library.globalAgent || library.Agent.globalAgent;
       library.globalAgent = library.Agent.globalAgent = httpAgent;
-      var _httpRequest = library.request;
+      var _originalRequest = library.request;
       library.request = function(options, cb) {
         if (typeof options === 'string') {
           options = url.parse(options);
@@ -26,7 +49,11 @@ module.exports = function(options) {
 
         options.agent = options.agent || httpAgent;
 
-        return _httpRequest.call(http, options, cb);
+        if (ignoreHost(noProxy, options.host)) {
+          options.agent.proxy = {};
+        }
+        console.log(options);
+        return _originalRequest.call(library, options, cb);
       };
     }
   };
