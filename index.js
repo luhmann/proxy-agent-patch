@@ -1,12 +1,13 @@
 module.exports = function(options) {
   'use strict';
 
-  var url = require('url');
   var https = require('https');
   var http = require('http');
+  var url = require('url');
   var util = require('util');
   var HttpsProxyAgent = require('https-proxy-agent');
   var HttpProxyAgent = require('http-proxy-agent');
+  var _ = require('lodash');
 
   var httpProxy = (options && options.httpProxy) || process.env.http_proxy || process.env.HTTP_PROXY || null;
   var httpsProxy = (options && options.httpsProxy) || process.env.https_proxy || process.env.HTTPS_PROXY || null;
@@ -34,11 +35,10 @@ module.exports = function(options) {
 
 
   var patch = function(proxy, HttpAgent, library) {
-    var httpAgent = new HttpAgent(proxy);
+    var proxyAgent = new HttpAgent(proxy);
 
-    if (httpAgent) {
-      var originalAgent = library.globalAgent || library.Agent.globalAgent;
-      library.globalAgent = library.Agent.globalAgent = httpAgent;
+    if (proxyAgent) {
+      library.globalAgent = library.Agent.globalAgent = proxyAgent;
       var _originalRequest = library.request;
       library.request = function(options, cb) {
         if (typeof options === 'string') {
@@ -47,12 +47,13 @@ module.exports = function(options) {
           options = util._extend({}, options);
         }
 
-        options.agent = options.agent || httpAgent;
 
-        if (ignoreHost(noProxy, options.host)) {
-          options.agent.proxy = {};
+        if (!ignoreHost(noProxy, options.host)) {
+          options.agent = options.agent || proxyAgent;
+        } else {
+          options.agent = options.agent || new library.Agent();
         }
-        console.log(options);
+
         return _originalRequest.call(library, options, cb);
       };
     }
