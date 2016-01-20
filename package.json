@@ -2,7 +2,7 @@
   "name": "proxy-agent-patch",
   "description": "Monkey patch agent of http and https methods to use an http-proxy",
   "homepage": "https://github.com/luhmann/proxy-agent-patch",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "license": "MIT",
   "main": "index.js",
   "scripts": {
