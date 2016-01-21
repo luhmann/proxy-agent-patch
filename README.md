@@ -28,8 +28,19 @@ require('proxy-agent-patch')({
 ```
 You can also specify an http-proxy for https-connections.
 
+### Testing
+
+You can run the tests with
+
+`npm test`
+
+Note that at the moment tests try to connect to real urls, when testing the `no_proxy`-setting. This is far from ideal
+as it will fail if you are behind a proxy as you probably are when trying out this package. It works on Travis for now
+and will be fixed eventually.
+
 ### Release History
 * 0.0.x Development Version. Do not use
 * 0.0.1 Initial release version
 * 0.0.2 Refactoring of patching
 * 0.0.3 Add `no_proxy`-option
+* 0.0.4 Differentiate `no_proxy`-settings at port level, allow subdomain wildcard
