@@ -1,17 +1,20 @@
-var _ = require('lodash');
-var bank = require('../');
-var test = require('tape');
-var http = require('http');
-var https = require('https');
+var
+  _ = require('lodash'),
+  bank = require('../'),
+  test = require('tape'),
+  http = require('http'),
+  https = require('https'),
+  _unpatchedHttp = _.cloneDeep(http),
+  PORT = 6768,
+  PROXY_URL = 'http://localhost:' + PORT,
+  TEST_URL = 'http://example.org/',
+  PROXY_RESPONSE = 'This is proxy calling',
+  createServer,
+  createTestSetup,
+  setup;
 
-var _unpatchedHttp = _.cloneDeep(http);
-var PORT = 6768;
-var PROXY_URL = 'http://localhost:' + PORT;
-var TEST_URL = 'http://example.org/';
-var PROXY_RESPONSE = 'This is proxy calling';
-
-var createServer = function (port, protocol) {
-  var s = _unpatchedHttp.createServer(function (req, resp) {
+createServer = function(port, protocol) {
+  var s = _unpatchedHttp.createServer(function(req, resp) {
     s.emit('incoming', req, resp);
     s.emit(req.url.replace(/(\?.*)/, ''), req, resp)
   });
@@ -20,9 +23,9 @@ var createServer = function (port, protocol) {
   s.url = 'http://localhost:' + port;
   s.protocol = protocol || 'http';
   return s
-}
+};
 
-var createTestSetup = function(url, protocol) {
+createTestSetup = function(url, protocol) {
   var proxy = createServer(PORT, protocol);
   proxy.listen(PORT, function() {
     // proxy.on('incoming', function(req, res) { res.writeHead(200); res.write('Hello World'); } )
@@ -36,12 +39,12 @@ var createTestSetup = function(url, protocol) {
   return proxy;
 };
 
-var setup = function() {
+setup = function() {
   http = _.cloneDeep(_unpatchedHttp);
   process.env = {};
 }
 
-test('replace global http agent', function (assert) {
+test('replace global http agent', function(assert) {
   assert.test('globalAgent should contain proxy settings set from "http_proxy"-env variable', function(assert) {
     setup();
     var proxy = createTestSetup(TEST_URL);
@@ -50,7 +53,9 @@ test('replace global http agent', function (assert) {
     bank();
     http.get(TEST_URL, function(res) {
       var body = '';
-      res.on('data', function(data) { body += data; });
+      res.on('data', function(data) {
+        body += data;
+      });
       res.on('end', function() {
         assert.equal(body, PROXY_RESPONSE, 'Proxy was called');
         proxy.close();
@@ -68,7 +73,9 @@ test('replace global http agent', function (assert) {
     bank();
     http.get(TEST_URL, function(res) {
       var body = '';
-      res.on('data', function(data) { body += data; });
+      res.on('data', function(data) {
+        body += data;
+      });
       res.on('end', function() {
         assert.equal(body, PROXY_RESPONSE, 'Proxy was called');
         proxy.close();
@@ -86,7 +93,9 @@ test('replace global http agent', function (assert) {
 
     http.get(TEST_URL, function(res) {
       var body = '';
-      res.on('data', function(data) { body += data; });
+      res.on('data', function(data) {
+        body += data;
+      });
       res.on('end', function() {
         assert.equal(body, PROXY_RESPONSE, 'Proxy was called');
         proxy.close();
@@ -97,7 +106,7 @@ test('replace global http agent', function (assert) {
 });
 
 // TODO: add more complex setup for local https proxy-server
-test('replace global https agent', function (assert) {
+test('replace global https agent', function(assert) {
   assert.test('globalAgent should contain proxy settings set from "https_proxy"-env variable', function(assert) {
     setup();
     process.env.https_proxy = 'https://example.org:8000';
@@ -159,7 +168,9 @@ test('no_proxy', function(assert) {
     bank();
     http.get(TEST_URL, function(res) {
       var body = '';
-      res.on('data', function(data) { body += data; });
+      res.on('data', function(data) {
+        body += data;
+      });
       res.on('end', function() {
         assert.notEqual(body, PROXY_RESPONSE, 'Proxy was not called');
         proxy.close();
@@ -176,7 +187,9 @@ test('no_proxy', function(assert) {
     bank();
     http.get('http://mail.google.com', function(res) {
       var body = '';
-      res.on('data', function(data) { body += data; });
+      res.on('data', function(data) {
+        body += data;
+      });
       res.on('end', function() {
         assert.notEqual(body, PROXY_RESPONSE, 'Proxy was not called');
         proxy.close();
@@ -195,7 +208,9 @@ test('no_proxy', function(assert) {
     });
     http.get('http://mail.google.com', function(res) {
       var body = '';
-      res.on('data', function(data) { body += data; });
+      res.on('data', function(data) {
+        body += data;
+      });
       res.on('end', function() {
         assert.notEqual(body, PROXY_RESPONSE, 'Proxy was not called');
         proxy.close();
@@ -212,9 +227,49 @@ test('no_proxy', function(assert) {
     bank();
     http.get('http://mail.google.com', function(res) {
       var body = '';
-      res.on('data', function(data) { body += data; });
+      res.on('data', function(data) {
+        body += data;
+      });
       res.on('end', function() {
         assert.notEqual(body, PROXY_RESPONSE, 'Proxy was not called');
+        proxy.close();
+        assert.end();
+      });
+    });
+  });
+
+  assert.test('proxy should not be used, when "*"-wildcard for subdomain matching is set', function(assert) {
+    setup();
+    var proxy = createTestSetup(TEST_URL);
+    process.env.http_proxy = PROXY_URL;
+    process.env.NO_PROXY = '*.google.com, *.example.com';
+    bank();
+    http.get('http://mail.google.com', function(res) {
+      var body = '';
+      res.on('data', function(data) {
+        body += data;
+      });
+      res.on('end', function() {
+        assert.notEqual(body, PROXY_RESPONSE, 'Proxy was not called');
+        proxy.close();
+        assert.end();
+      });
+    });
+  });
+
+  assert.test('proxy should be used, when "NO_PROXY"-env-variable is set with non matching port', function(assert) {
+    setup();
+    var proxy = createTestSetup(TEST_URL);
+    process.env.http_proxy = PROXY_URL;
+    process.env.NO_PROXY = '.google.com,.example.org:8080';
+    bank();
+    http.get('http://example.org', function(res) {
+      var body = '';
+      res.on('data', function(data) {
+        body += data;
+      });
+      res.on('end', function() {
+        assert.equal(body, PROXY_RESPONSE, 'Proxy was called');
         proxy.close();
         assert.end();
       });
